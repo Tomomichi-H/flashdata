@@ -192,4 +192,4 @@ FlashData, with its unique blend of privacy, security, and interoperability, mar
 
 As we look to the future, the potential enhancements and use-cases for FlashData seem boundless. With planned features such as the ability to provide WASM binaries for arbitrary program execution with metering, private data access via homomorphic encryption, and multi-party private key handling, FlashData is geared up to set new standards in the oracle space and redefine the landscape of blockchain-based applications.
 
-In conclusion, FlashData represents a pioneering leap in the oracle network design, leveraging the best of blockchain technology to create a truly decentralized, secure, and efficient data provision system. We believe this opens the door to countless possibilities and innovations in the world of smart contracts and beyond.* Appendix
+In conclusion, FlashData represents a pioneering leap in the oracle network design, leveraging the best of blockchain technology to create a truly decentralized, secure, and efficient data provision system. We believe this opens the door to countless possibilities and innovations in the world of smart contracts and beyond.
