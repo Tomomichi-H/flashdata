@@ -12,7 +12,7 @@ With a keen focus on privacy, security, and quality, FlashData stands as a compe
 
 ## White Paper
 
-A comprehensive exploration of FlashData, its architecture, functionality, use cases, and future development can be found in the [FlashData White Paper](./paper.md). The white paper details the intricacies of the network and provides valuable insights into its operation and potential applications.
+A comprehensive exploration of FlashData, its architecture, functionality, use cases, and future development can be found in the [FlashData White Paper](./docs/paper.md). The white paper details the intricacies of the network and provides valuable insights into its operation and potential applications.
 
 ## Upcoming: Codebase
 
