@@ -64,7 +64,7 @@ def handle_json_rpc():
     else:
         try:
             handler_output = handler(params)
-            logger.debug("handler_output, %s", handler_output)
+            logger.debug("handler_output: %s", handler_output)
             if "error" in handler_output:
                 logger.error("Error executing method: %s", handler_output["error"])
                 response["error"] = handler_output["error"]
@@ -78,47 +78,43 @@ def handle_json_rpc():
     return jsonify(response)
 
 def get_oracle_info(params):
-    logger.debug("get_oracle_info with params %s", params)
+    logger.debug("get_oracle_info with params: %s", params)
     supported_data_points = []
     data_keys = redis_conn.keys("data:*")
-    if data_keys is not None:
+    if data_keys:
         for key in data_keys:
             dp = json.loads(redis_conn.get(key))
-            supported_data_points.append({
-                "dataPointID": dp["dataPointID"],
-                "dataSource": dp["dataSource"],
-                "updateFrequency": dp["updateFrequency"],
-                "price": dp["price"]
-            })
+            supported_data_points.append(dp)
 
     oracle_info = {}
     info_keys = redis_conn.keys("oracle:*")
-    if info_keys is not None:
+    if info_keys:
         for key in info_keys:
             name = key.decode("utf-8").split(":")[1].strip()
-            value = redis_conn.get(key)
-            oracle_info[name] = value.decode("utf-8")
+            value = redis_conn.get(key).decode("utf-8")
+            oracle_info[name] = value
+
     response = {
-        "result": {
-            "oracle_info": oracle_info,
-            "supported_data_points": supported_data_points
-        }
+        "oracle_info": oracle_info,
+        "supported_data_points": supported_data_points
     }
 
     return response
 
 def request_data(params):
-    logger.debug("request_data with params %s", params)
-    data_point_id = params.get("dataPointID", [])
+    logger.debug("request_data with params: %s", params)
+    data_point_id = params.get("dataPointID")
     if not data_point_id:
         return {"error": "Invalid request: Missing dataPoint parameter"}
+
     data_point_data = redis_conn.get(data_point_id)
     if not data_point_data:
         return {"error": f"No data for dataPointID {data_point_id}"}
+
     return data_point_data
 
 def add_data_point(params):
-    logger.debug("add_data_point with params %s", params)
+    logger.debug("add_data_point with params: %s", params)
     data_point = params.get("dataPoint")
 
     if not data_point:
