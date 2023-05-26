@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify
 import redis
-import json
-import hashlib
 import toml
 import logging
 import requests
+from internal import add_data_point
+from external import get_oracle_info, request_data
 
 app = Flask(__name__)
 redis_conn = None
@@ -63,8 +63,8 @@ def handle_json_rpc():
         response["error"] = "Method not found"
     else:
         try:
-            handler_output = handler(params)
-            logger.debug("handler_output: %s", handler_output)
+            handler_output = handler(params, redis_conn, logger)
+            logger.debug("handler_output, %s", handler_output)
             if "error" in handler_output:
                 logger.error("Error executing method: %s", handler_output["error"])
                 response["error"] = handler_output["error"]
@@ -76,67 +76,6 @@ def handle_json_rpc():
 
     logger.info("Sending JSON-RPC response: %s", response)
     return jsonify(response)
-
-def get_oracle_info(params):
-    logger.debug("get_oracle_info with params: %s", params)
-    supported_data_points = []
-    data_keys = redis_conn.keys("data:*")
-    if data_keys:
-        for key in data_keys:
-            dp = json.loads(redis_conn.get(key))
-            supported_data_points.append(dp)
-
-    oracle_info = {}
-    info_keys = redis_conn.keys("oracle:*")
-    if info_keys:
-        for key in info_keys:
-            name = key.decode("utf-8").split(":")[1].strip()
-            value = redis_conn.get(key).decode("utf-8")
-            oracle_info[name] = value
-
-    response = {
-        "oracle_info": oracle_info,
-        "supported_data_points": supported_data_points
-    }
-
-    return response
-
-def request_data(params):
-    logger.debug("request_data with params: %s", params)
-    data_point_id = params.get("dataPointID")
-    if not data_point_id:
-        return {"error": "Invalid request: Missing dataPoint parameter"}
-
-    data_point_data = redis_conn.get(data_point_id)
-    if not data_point_data:
-        return {"error": f"No data for dataPointID {data_point_id}"}
-
-    return data_point_data
-
-def add_data_point(params):
-    logger.debug("add_data_point with params: %s", params)
-    data_point = params.get("dataPoint")
-
-    if not data_point:
-        return {"error": "Invalid request: Missing dataPoint parameter"}
-
-    required_fields = ["dataSource", "updateFrequency", "price"]
-    for field in required_fields:
-        if field not in data_point:
-            return {"error": f"Invalid request: Missing '{field}' field"}
-
-    data_point_id = generate_data_point_id(data_point["dataSource"], data_point["updateFrequency"])
-    data_point["dataPointID"] = data_point_id
-    dp_data = json.dumps(data_point)
-    logger.debug("Added data point: %s", data_point)
-    redis_conn.set(f"data:{data_point_id}", dp_data)
-
-    return {"dataPointID": data_point_id}
-
-def generate_data_point_id(data_source, update_frequency):
-    data_str = data_source + str(update_frequency)
-    sha_signature = hashlib.sha256(data_str.encode()).hexdigest()
-    return sha_signature
 
 # Mapping of method names to handler functions
 METHOD_HANDLERS = {
