@@ -1,0 +1,49 @@
+version: '3'
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - mynetwork
+
+  lnd:
+    build:
+      context: ./mocks
+      dockerfile: Dockerfile-lnd
+    ports:
+      - 8080:8080
+    networks:
+      - mynetwork
+
+  oracle-node-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 5000:5000
+    depends_on:
+      - redis
+      - lnd
+    networks:
+      - mynetwork
+
+  oracle-node-client-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile-tests
+    depends_on:
+      - redis
+      - lnd
+    volumes:
+      - ./tests:/app/tests
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    entrypoint: sh -c "python -m unittest discover -s tests -p 'test_*.py'"
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+    driver: bridge

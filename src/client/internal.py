@@ -4,22 +4,17 @@ import hashlib
 def add_data_point(params, redis_conn, logger):
     logger.debug("add_data_point with params %s", params)
 
-    data_point = params.get("dataPoint")
-
-    if not data_point:
-        return {"error": "Invalid request: Missing dataPoint parameter"}
-
     required_fields = ["dataSource", "updateFrequency", "price"]
     for field in required_fields:
-        if field not in data_point:
+        if field not in params:
             return {"error": f"Invalid request: Missing '{field}' field"}
 
-    data_point_id = generate_data_point_id(data_point["dataSource"], data_point["updateFrequency"])
-    data_point["dataPointID"] = data_point_id
-    dp_data = json.dumps(data_point)
+    data_point_id = generate_data_point_id(params["dataSource"], params["updateFrequency"])
+    params["dataPointID"] = data_point_id
+    dp_data = json.dumps(params)
     redis_conn.set(f"data:{data_point_id}", dp_data)
 
-    logger.debug("Added data point: %s", data_point)
+    logger.debug("Added data point: %s", params)
 
     return {"dataPointID": data_point_id}
 
