@@ -123,7 +123,9 @@ def add_data_point(params):
             return {"error": f"Invalid request: Missing '{field}' field"}
 
     data_point_id = generate_data_point_id(data_point["dataSource"], data_point["updateFrequency"])
+    data_point["dataPointID"] = data_point_id
     dp_data = json.dumps(data_point)
+    logger.debug("Added data point: %s", data_point)
     redis_conn.set(f"data:{data_point_id}", dp_data)
 
     return {"dataPointID": data_point_id}
