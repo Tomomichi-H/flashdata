@@ -34,7 +34,7 @@ def initialize_redis(config):
             identity_pubkey = response_data.get("identity_pubkey")
             if identity_pubkey:
                 redis_conn.set(f"oracle:identity_pubkey", identity_pubkey)
-                logger.info("Stored identity_pubkey in Redis: %s", identity_pubkey)
+                logger.info("Stored oracle:identity_pubkey in Redis: %s", identity_pubkey)
         except Exception as e:
             logger.exception("Failed to fetch LND info: %s", str(e))
     else:
@@ -80,20 +80,27 @@ def handle_json_rpc():
 def get_oracle_info(params):
     logger.debug("get_oracle_info with params %s", params)
     supported_data_points = []
-    for key in redis_conn.keys("data:*"):
-        dp = json.loads(redis_conn.get(key))
-        supported_data_points.append({
-            "dataPointID": dp["dataPointID"],
-            "dataSource": dp["dataSource"],
-            "updateFrequency": dp["updateFrequency"],
-            "price": dp["price"]
-        })
+    data_keys = redis_conn.keys("data:*")
+    if data_keys is not None:
+        for key in data_keys:
+            dp = json.loads(redis_conn.get(key))
+            supported_data_points.append({
+                "dataPointID": dp["dataPointID"],
+                "dataSource": dp["dataSource"],
+                "updateFrequency": dp["updateFrequency"],
+                "price": dp["price"]
+            })
 
-    identity_pubkey = redis_conn.get("oracle:identity_pubkey")
-    logger.info("Identity pubkey: %s", identity_pubkey)
+    oracle_info = {}
+    info_keys = redis_conn.keys("oracle:*")
+    if info_keys is not None:
+        for key in info_keys:
+            name = key.decode("utf-8").split(":")[1].strip()
+            value = redis_conn.get(key)
+            oracle_info[name] = value.decode("utf-8")
     response = {
         "result": {
-            "identity_pubkey": identity_pubkey.decode() if identity_pubkey else None,
+            "oracle_info": oracle_info,
             "supported_data_points": supported_data_points
         }
     }
